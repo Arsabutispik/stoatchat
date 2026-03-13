@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use futures::future::try_join_all;
 use indexmap::IndexSet;
 use revolt_result::Result;
@@ -294,18 +295,28 @@ impl AbstractMessages for ReferenceDb {
         channels: &[String],
         author: &str,
         since: SystemTime
-    ) -> Result<()> {
-        let since_ulid = Ulid::from_datetime(since).to_string();
+    ) -> Result<HashMap<String, Vec<String>>> {
+        let threshold_ulid = Ulid::from_datetime(since).to_string();
+        let mut deleted_messages: HashMap<String, Vec<String>> = HashMap::new();
+
         self.messages
             .lock()
             .await
             .retain(|id, message| {
                 let should_delete = message.author == author
                     && channels.contains(&message.channel)
-                    && id.as_str() >= since_ulid.as_str();
+                    && id.as_str() >= threshold_ulid.as_str();
+
+                if should_delete {
+                    deleted_messages
+                        .entry(message.channel.clone())
+                        .or_default()
+                        .push(id.clone());
+                }
+
                 !should_delete
             });
 
-        Ok(())
+        Ok(deleted_messages)
     }
 }

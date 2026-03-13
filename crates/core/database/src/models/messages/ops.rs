@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::time::SystemTime;
 use revolt_result::Result;
 
@@ -48,5 +49,5 @@ pub trait AbstractMessages: Sync + Send {
         channels: &[String],
         author: &str,
         since: SystemTime
-    ) -> Result<()>;
+    ) -> Result<HashMap<String, Vec<String>>>;
 }

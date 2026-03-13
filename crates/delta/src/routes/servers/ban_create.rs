@@ -14,6 +14,7 @@ use revolt_result::{create_error, Result};
 use rocket::{serde::json::Json, State};
 use ulid::Ulid;
 use validator::Validate;
+use revolt_database::events::client::EventV1;
 
 /// # Ban User
 ///
@@ -80,11 +81,22 @@ pub async fn ban(
         if seconds > 0 {
             let threshold_time = SystemTime::now() - Duration::from_secs(seconds as u64);
 
-            db.delete_messages_by_author_since(
+            let deleted_groups = db.delete_messages_by_author_since(
                 &server.channels,
                 target.id,
                 threshold_time
             ).await?;
+
+            for (channel_id, message_ids) in deleted_groups {
+                if !message_ids.is_empty() {
+                    EventV1::BulkMessageDelete {
+                        channel: channel_id.clone(),
+                        ids: message_ids,
+                    }
+                        .p(channel_id)
+                        .await;
+                }
+            }
         }
     }
     ServerBan::create(db, &server, target.id, data.reason)
