@@ -322,7 +322,7 @@ impl AbstractMessages for MongoDb {
             )
             .await
             .map(|_| ())
-            .map_err(|_| create_database_error!("delete_many", "messages"))
+            .map_err(|_| create_database_error!("delete_many", COL))
     }
 }
 
