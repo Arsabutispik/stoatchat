@@ -16,9 +16,9 @@ use crate::routes::admin::util::{
 pub async fn admin_server_remove_members(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
-    user_id: Vec<Reference>,
+    user_id: Vec<Reference<'_>>,
     suppress_alerts: bool,
 ) -> Result<EmptyResponse> {
     let admin_user = flatten_authorized_user(&auth);

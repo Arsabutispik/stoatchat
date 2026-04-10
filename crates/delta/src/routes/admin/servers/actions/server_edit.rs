@@ -16,7 +16,7 @@ use crate::routes::admin::util::{
 pub async fn admin_server_edit(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
     body: Json<v0::DataEditServer>,
 ) -> Result<Json<v0::Server>> {

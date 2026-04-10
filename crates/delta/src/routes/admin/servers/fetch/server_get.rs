@@ -14,7 +14,7 @@ use crate::routes::admin::util::{
 pub async fn admin_server_get(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
 ) -> Result<Json<v0::AdminServerResponse>> {
     let user = flatten_authorized_user(&auth);

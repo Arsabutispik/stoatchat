@@ -134,7 +134,7 @@ impl<'a> JsonSchema for Reference<'a> {
 }
 
 #[cfg(feature = "rocket-impl")]
-impl<'r> FromFormField<'r> for Reference {
+impl<'r> FromFormField<'r> for Reference<'r> {
     fn from_value(field: rocket::form::ValueField<'r>) -> rocket::form::Result<'r, Self> {
         Ok(Reference::from_unchecked(field.value.into()))
     }

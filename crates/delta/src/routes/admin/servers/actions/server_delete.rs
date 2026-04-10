@@ -15,7 +15,7 @@ use crate::routes::admin::util::{
 pub async fn admin_server_delete(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
 ) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);

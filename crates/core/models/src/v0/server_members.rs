@@ -157,9 +157,4 @@ auto_derived!(
         pub user: crate::v0::User,
         pub member: Member,
     }
-
-    pub struct MemberWithUserResponse {
-        pub user: crate::v0::User,
-        pub member: Member,
-    }
 );

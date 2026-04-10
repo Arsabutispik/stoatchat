@@ -15,8 +15,8 @@ use crate::routes::admin::util::{
 pub async fn admin_server_create_invite(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
-    channel_id: Reference,
+    id: Reference<'_>,
+    channel_id: Reference<'_>,
     case: Option<&str>,
     slug: Option<&str>,
 ) -> Result<Json<v0::Invite>> {

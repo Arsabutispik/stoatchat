@@ -13,7 +13,7 @@ use crate::routes::admin::util::{
 pub async fn admin_comment_fetch_object(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
 ) -> Result<Json<Vec<v0::AdminComment>>> {
     let user = flatten_authorized_user(&auth);
     if !user_has_permission(user, v0::AdminUserPermissionFlags::Comments) {

@@ -17,7 +17,7 @@ use crate::routes::admin::util::{
 pub async fn admin_comment_edit(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     body: Json<v0::AdminCommentEdit>,
 ) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);

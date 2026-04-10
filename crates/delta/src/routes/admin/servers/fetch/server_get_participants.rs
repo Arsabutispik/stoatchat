@@ -15,7 +15,7 @@ use crate::routes::admin::util::{
 pub async fn admin_server_get_participants(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
 ) -> Result<Json<Vec<(v0::User, Option<v0::Member>)>>> {
     let user = flatten_authorized_user(&auth);

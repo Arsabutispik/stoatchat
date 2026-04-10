@@ -18,9 +18,9 @@ use crate::routes::admin::util::{
 pub async fn admin_server_unban_member(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
-    user_id: Reference,
+    user_id: Reference<'_>,
     suppress_alerts: bool,
     body: Json<v0::DataBanCreate>,
 ) -> Result<EmptyResponse> {

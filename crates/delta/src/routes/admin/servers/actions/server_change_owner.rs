@@ -16,9 +16,9 @@ use crate::routes::admin::util::{
 pub async fn admin_server_change_owner(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
-    user_id: Reference,
+    user_id: Reference<'_>,
 ) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);
     if !user_has_permission(user, v0::AdminUserPermissionFlags::ManageServers) {

@@ -13,7 +13,7 @@ use crate::routes::admin::util::user_has_permission;
 pub async fn admin_revoke_token(
     db: &State<Database>,
     auth: AdminMachineToken,
-    token: Reference,
+    token: Reference<'_>,
 ) -> Result<EmptyResponse> {
     if !user_has_permission(
         &auth.on_behalf_of,

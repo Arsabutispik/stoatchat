@@ -16,7 +16,7 @@ use crate::routes::admin::util::{
 pub async fn admin_server_get_members(
     db: &State<Database>,
     auth: AdminAuthorization,
-    id: Reference,
+    id: Reference<'_>,
     case: Option<&str>,
     after: Option<usize>,
 ) -> Result<Json<v0::AdminMemberWithUserAndOffsetResponse>> {

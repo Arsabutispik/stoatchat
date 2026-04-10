@@ -12,7 +12,7 @@ use crate::routes::admin::util::{flatten_authorized_user, user_has_permission};
 pub async fn admin_edit_user(
     db: &State<Database>,
     auth: AdminAuthorization,
-    target: Reference,
+    target: Reference<'_>,
     body: Json<v0::AdminUserEdit>,
 ) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);
