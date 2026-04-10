@@ -1,7 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use cached::proc_macro::cached;
-use config::{Config, File, FileFormat};
+use config::{Config, Environment, File, FileFormat};
 use futures_locks::RwLock;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
@@ -94,11 +94,22 @@ static CONFIG_BUILDER: Lazy<RwLock<Config>> = Lazy::new(|| {
             }
         }
 
-        for path in CONFIG_SEARCH_PATHS {
-            if std::path::Path::new(path).exists() {
-                builder = builder.add_source(File::new(path, FileFormat::Toml));
+        let cwd = std::env::current_dir().unwrap();
+        let mut cwd: Option<&Path> = Some(&cwd);
+
+        while let Some(path) = cwd {
+            for config_path in CONFIG_SEARCH_PATHS {
+                let config_path = path.join(config_path);
+                if config_path.exists() {
+                    builder = builder
+                        .add_source(File::new(config_path.to_str().unwrap(), FileFormat::Toml));
+                }
             }
+
+            cwd = path.parent();
         }
+
+        builder = builder.add_source(Environment::with_prefix("REVOLT").separator("__"));
 
         builder.build().unwrap()
     })
@@ -108,6 +119,7 @@ static CONFIG_BUILDER: Lazy<RwLock<Config>> = Lazy::new(|| {
 pub struct Database {
     pub mongodb: String,
     pub redis: String,
+    pub redis_pubsub: Option<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -125,8 +137,7 @@ pub struct Hosts {
     pub events: String,
     pub autumn: String,
     pub january: String,
-    pub voso_legacy: String,
-    pub voso_legacy_ws: String,
+    pub livekit: HashMap<String, String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -200,6 +211,25 @@ pub struct ApiWorkers {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct ApiLiveKit {
+    pub call_ring_duration: usize,
+    pub nodes: HashMap<String, LiveKitNode>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct LiveKitNode {
+    pub url: String,
+    pub lat: f64,
+    pub lon: f64,
+    pub key: String,
+    pub secret: String,
+
+    // whether to hide the node in the nodes list
+    #[serde(default)]
+    pub private: bool,
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct ApiUsers {
     pub early_adopter_cutoff: Option<u64>,
 }
@@ -210,6 +240,7 @@ pub struct Api {
     pub smtp: ApiSmtp,
     pub security: ApiSecurity,
     pub workers: ApiWorkers,
+    pub livekit: ApiLiveKit,
     pub users: ApiUsers,
 }
 
@@ -218,10 +249,12 @@ pub struct Pushd {
     pub production: bool,
     pub exchange: String,
     pub mass_mention_chunk_size: usize,
+    pub render_cache_time: usize,
 
     // Queues
     pub message_queue: String,
     pub mass_mention_queue: String,
+    pub dm_call_queue: String,
     pub fr_accepted_queue: String,
     pub fr_received_queue: String,
     pub generic_queue: String,
@@ -250,6 +283,10 @@ impl Pushd {
 
     pub fn get_mass_mention_routing_key(&self) -> String {
         self.get_routing_key(self.mass_mention_queue.clone())
+    }
+
+    pub fn get_dm_call_routing_key(&self) -> String {
+        self.get_routing_key(self.dm_call_queue.clone())
     }
 
     pub fn get_fr_accepted_routing_key(&self) -> String {
@@ -309,6 +346,8 @@ pub struct GlobalLimits {
     pub new_user_hours: usize,
 
     pub body_limit_size: usize,
+
+    pub restrict_server_creation: Vec<String>,
 }
 
 #[derive(Deserialize, Debug, Clone)]
@@ -319,6 +358,10 @@ pub struct FeaturesLimits {
     pub message_length: usize,
     pub message_attachments: usize,
     pub servers: usize,
+    pub voice_quality: u32,
+    pub video: bool,
+    pub video_resolution: [u32; 2],
+    pub video_aspect_ratio: [f32; 2],
 
     pub file_upload_size_limit: HashMap<String, usize>,
 }
@@ -365,6 +408,7 @@ pub struct Features {
 pub struct Sentry {
     pub api: String,
     pub events: String,
+    pub voice_ingress: String,
     pub files: String,
     pub proxy: String,
     pub pushd: String,
@@ -383,6 +427,7 @@ pub struct Settings {
     pub features: Features,
     pub sentry: Sentry,
     pub production: bool,
+    pub disable_events_dont_use: bool,
 }
 
 impl Settings {
@@ -413,12 +458,14 @@ pub async fn config() -> Settings {
     let mut config = read().await.try_deserialize::<Settings>().unwrap();
 
     // inject REDIS_URI for redis-kiss library
-    if std::env::var("REDIS_URL").is_err() {
+    if std::env::var("REDIS_URI").is_err() {
         std::env::set_var("REDIS_URI", config.database.redis.clone());
     }
 
     // auto-detect production nodes
-    if config.hosts.api.contains("https") && config.hosts.api.contains("revolt.chat") {
+    if config.hosts.api.contains("https")
+        && (config.hosts.api.contains("revolt.chat") || config.hosts.api.contains("stoat.chat"))
+    {
         config.production = true;
     }
 

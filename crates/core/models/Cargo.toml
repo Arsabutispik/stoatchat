@@ -1,10 +1,11 @@
 [package]
 name = "revolt-models"
-version = "0.8.9"
+version = "0.12.0"
 edition = "2021"
 license = "MIT"
 authors = ["Paul Makles <me@insrt.uk>"]
 description = "Revolt Backend: API Models"
+repository = "https://github.com/stoatchat/stoatchat"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -20,8 +21,8 @@ default = ["serde", "partials", "rocket"]
 
 [dependencies]
 # Core
-revolt-config = { version = "0.8.9", path = "../config" }
-revolt-permissions = { version = "0.8.9", path = "../permissions" }
+revolt-config = { version = "0.12.0", path = "../config" }
+revolt-permissions = { version = "0.12.0", path = "../permissions" }
 
 # Utility
 regex = "1.11"

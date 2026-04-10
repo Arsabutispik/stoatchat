@@ -132,6 +132,11 @@ auto_derived!(
         MessagePinned { id: String, by: String },
         #[serde(rename = "message_unpinned")]
         MessageUnpinned { id: String, by: String },
+        #[serde(rename = "call_started")]
+        CallStarted {
+            by: String,
+            finished_at: Option<Timestamp>,
+        },
     }
 
     /// Name and / or avatar override information
@@ -199,6 +204,9 @@ auto_derived!(
         pub image: Option<String>,
         /// Message content or system message information
         pub body: String,
+        /// The raw body, if the body has been rendered
+        #[serde(skip_serializing_if = "Option::is_none")]
+        pub raw_body: Option<String>,
         /// Unique tag, usually the channel ID
         pub tag: String,
         /// Timestamp at which this notification was created
@@ -383,6 +391,7 @@ auto_derived!(
 );
 
 /// Message Author Abstraction
+#[derive(Clone)]
 pub enum MessageAuthor<'a> {
     User(&'a User),
     Webhook(&'a Webhook),
@@ -445,6 +454,7 @@ impl From<SystemMessage> for String {
             }
             SystemMessage::MessagePinned { .. } => "Message pinned.".to_string(),
             SystemMessage::MessageUnpinned { .. } => "Message unpinned.".to_string(),
+            SystemMessage::CallStarted { .. } => "Call started.".to_string(),
         }
     }
 }
@@ -505,6 +515,7 @@ impl PushNotification {
             icon,
             image,
             body,
+            raw_body: None,
             tag: channel.id().to_string(),
             timestamp,
             url: format!("{}/channel/{}/{}", config.hosts.app, channel.id(), msg.id),

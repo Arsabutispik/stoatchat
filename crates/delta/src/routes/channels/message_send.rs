@@ -1,9 +1,10 @@
 use chrono::{Duration, Utc};
+use redis_kiss::{get_connection, redis, AsyncCommands};
 use revolt_database::util::permissions::DatabasePermissionQuery;
 use revolt_database::{
     util::idempotency::IdempotencyKey, util::reference::Reference, Database, User,
 };
-use revolt_database::{Interactions, Message, AMQP};
+use revolt_database::{Channel, Interactions, Message, AMQP};
 use revolt_models::v0;
 use revolt_permissions::PermissionQuery;
 use revolt_permissions::{calculate_channel_permissions, ChannelPermission};
@@ -55,6 +56,50 @@ pub async fn message_send(
     // Check permissions for files
     if data.attachments.as_ref().is_some_and(|v| !v.is_empty()) {
         permissions.throw_if_lacking_channel_permission(ChannelPermission::UploadFiles)?;
+    }
+
+    if !permissions.has_channel_permission(ChannelPermission::BypassSlowmode) {
+        if let Channel::TextChannel {
+            slowmode: Some(channel_slowmode),
+            id: channel_id,
+            ..
+        } = &channel
+        {
+            if *channel_slowmode > 0 {
+                if let Ok(conn) = get_connection().await {
+                    let mut conn = conn.into_inner();
+
+                    let slowmode_key = format!("slowmode:{}:{}", user.id, channel_id);
+
+                    // Atomic check-and-set: only set if absent and apply expiry in one command.
+                    let set_result: Option<String> = conn
+                        .set_options(
+                            &slowmode_key,
+                            "1", // The value doesn't matter, only the key's existence
+                            redis::SetOptions::default()
+                                .conditional_set(redis::ExistenceCheck::NX)
+                                .with_expiration(redis::SetExpiry::EX(*channel_slowmode as usize)),
+                        )
+                        .await
+                        .unwrap_or(None);
+
+                    // If `set_result` is None, the `NX` condition failed because the key already exists.
+                    // This means the user is currently in slowmode.
+                    if set_result.is_none() {
+                        // Fetch the remaining TTL to accurately populate the retry_after field
+                        let ttl: i64 = conn.ttl(&slowmode_key).await.unwrap_or(0);
+
+                        // Redis returns positive integers for valid TTLs
+                        if ttl > 0 {
+                            return Err(create_error!(InSlowmode {
+                                retry_after: ttl as u64
+                            }));
+                        }
+                    }
+                }
+                // If Redis connection fails, just skip the slowmode check
+            }
+        }
     }
 
     // Ensure interactions information is correct
@@ -151,28 +196,20 @@ mod test {
                 name: "Hidden Channel".to_string(),
                 description: None,
                 nsfw: Some(false),
+                voice: None,
             },
             true,
         )
         .await
         .expect("Failed to make new channel");
 
-        let role = Role {
-            name: "Show Hidden Channel".to_string(),
-            permissions: OverrideField { a: 0, d: 0 },
-            colour: None,
-            hoist: false,
-            rank: 5,
-        };
-
-        let role_id = role
-            .create(&harness.db, &server.id)
+        let role = Role::create(&harness.db, &server, "Show Hidden Channel".to_string())
             .await
             .expect("Failed to create the role");
 
         let mut overrides = HashMap::new();
         overrides.insert(
-            role_id.clone(),
+            role.id.clone(),
             OverrideField {
                 a: (ChannelPermission::ViewChannel) as i64,
                 d: 0,
@@ -193,6 +230,8 @@ mod test {
                 d: ChannelPermission::ViewChannel as i64,
             }),
             last_message_id: None,
+            voice: None,
+            slowmode: None,
         };
         locked_channel
             .update(&harness.db, partial, vec![])
@@ -279,7 +318,7 @@ mod test {
             "Mention failed to be scrubbed when the user cannot see the channel"
         );
 
-        let second_member_roles = vec![role_id.clone()];
+        let second_member_roles = vec![role.id.clone()];
         let partial = PartialMember {
             id: None,
             joined_at: None,
@@ -287,6 +326,8 @@ mod test {
             avatar: None,
             timeout: None,
             roles: Some(second_member_roles),
+            can_publish: None,
+            can_receive: None,
         };
         second_member
             .update(&harness.db, partial, vec![])
@@ -492,7 +533,7 @@ mod test {
         let (_, _, other_user) = harness.new_user().await;
         let (server, _) = harness.new_server(&user).await;
         let channel = harness.new_channel(&server).await;
-        let (role_id, _role) = harness
+        let role = harness
             .new_role(
                 &server,
                 1,
@@ -514,7 +555,7 @@ mod test {
             Some(&harness.amqp),
             channel.clone(),
             v0::DataMessageSend {
-                content: Some(format!("Mentioning @everyone and role <%{}>", &role_id)),
+                content: Some(format!("Mentioning @everyone and role <%{}>", &role.id)),
                 nonce: None,
                 attachments: None,
                 replies: None,
@@ -559,7 +600,7 @@ mod test {
             Some(&harness.amqp),
             channel.clone(),
             v0::DataMessageSend {
-                content: Some(format!("Mentioning `@everyone` and role `<%{}>`", &role_id)),
+                content: Some(format!("Mentioning `@everyone` and role `<%{}>`", &role.id)),
                 nonce: None,
                 attachments: None,
                 replies: None,
@@ -601,7 +642,7 @@ mod test {
             "Role mentions detected when inside codeblock"
         );
 
-        other_member.roles.push(role_id.clone());
+        other_member.roles.push(role.id.clone());
         harness
             .db
             .update_member(
@@ -611,8 +652,10 @@ mod test {
                     id: None,
                     joined_at: None,
                     nickname: None,
-                    roles: Some(vec![role_id.clone()]),
+                    roles: Some(vec![role.id.clone()]),
                     timeout: None,
+                    can_publish: None,
+                    can_receive: None,
                 },
                 vec![],
             )
@@ -626,7 +669,7 @@ mod test {
             Some(&harness.amqp),
             channel.clone(),
             v0::DataMessageSend {
-                content: Some(format!("Mentioning @everyone and role <%{}>", &role_id)),
+                content: Some(format!("Mentioning @everyone and role <%{}>", &role.id)),
                 nonce: None,
                 attachments: None,
                 replies: None,

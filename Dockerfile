@@ -1,5 +1,5 @@
 # Build Stage
-FROM --platform="${BUILDPLATFORM}" rust:1.86.0-slim-bookworm
+FROM --platform="${BUILDPLATFORM}" rust:1.92.0-slim-bookworm
 USER 0:0
 WORKDIR /home/rust/src
 
@@ -34,6 +34,7 @@ COPY crates/services/january/Cargo.toml ./crates/services/january/
 COPY crates/services/gifbox/Cargo.toml ./crates/services/gifbox/
 COPY crates/daemons/crond/Cargo.toml ./crates/daemons/crond/
 COPY crates/daemons/pushd/Cargo.toml ./crates/daemons/pushd/
+COPY crates/daemons/voice-ingress/Cargo.toml ./crates/daemons/voice-ingress/
 RUN sh /tmp/build-image-layer.sh deps
 
 # Build all apps

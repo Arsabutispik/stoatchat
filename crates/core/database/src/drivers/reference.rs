@@ -14,7 +14,7 @@ use crate::{
 
 database_derived!(
     /// Reference implementation
-    #[derive(Default)]
+    #[derive(Default, Debug)]
     pub struct ReferenceDb {
         pub admin_audits: Arc<Mutex<BTreeMap<String, AdminAuditItem>>>,
         pub admin_cases: Arc<Mutex<HashMap<String, AdminCase>>>,

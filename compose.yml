@@ -12,6 +12,10 @@ services:
       - "27017:27017"
     volumes:
       - ./.data/db:/data/db
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   # MinIO
   minio:
@@ -40,7 +44,7 @@ services:
 
   # Rabbit
   rabbit:
-    image: rabbitmq:3-management
+    image: rabbitmq:4-management
     environment:
       RABBITMQ_DEFAULT_USER: rabbituser
       RABBITMQ_DEFAULT_PASS: rabbitpass
@@ -55,7 +59,7 @@ services:
 
   # Mock SMTP server
   maildev:
-    image: soulteary/maildev
+    image: maildev/maildev
     ports:
       - "14025:25"
       - "14080:8080"
@@ -64,3 +68,10 @@ services:
       MAILDEV_WEB_PORT: 8080
       MAILDEV_INCOMING_USER: smtp
       MAILDEV_INCOMING_PASS: smtp
+
+  livekit:
+    image: ghcr.io/stoatchat/livekit-server:v1.9.13
+    command: --config /etc/livekit.yml
+    network_mode: "host"
+    volumes:
+      - ./livekit.yml:/etc/livekit.yml

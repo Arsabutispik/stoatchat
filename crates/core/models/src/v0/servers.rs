@@ -85,6 +85,9 @@ auto_derived_partial!(
 auto_derived_partial!(
     /// Role
     pub struct Role {
+        /// Unique Id
+        #[cfg_attr(feature = "serde", serde(rename = "_id"))]
+        pub id: String,
         /// Role name
         pub name: String,
         /// Permissions available to this role
@@ -181,6 +184,7 @@ auto_derived!(
     }
 
     /// Response after creating new role
+    // TODO: remove this in favor of just Role
     pub struct NewRoleResponse {
         /// Id of the role
         pub id: String,
@@ -247,6 +251,9 @@ auto_derived!(
         ///
         /// Must be enabled in order to show up on [Revolt Discover](https://rvlt.gg).
         pub analytics: Option<bool>,
+
+        /// User id of the new owner
+        pub owner: Option<String>,
 
         /// Fields to remove from server object
         #[cfg_attr(feature = "serde", serde(default))]

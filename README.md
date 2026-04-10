@@ -1,15 +1,15 @@
 <div align="center">
 <h1>
-  Revolt Backend
+  Stoat Backend
   
-  [![Stars](https://img.shields.io/github/stars/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/stargazers)
-  [![Forks](https://img.shields.io/github/forks/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/network/members)
-  [![Pull Requests](https://img.shields.io/github/issues-pr/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/pulls)
-  [![Issues](https://img.shields.io/github/issues/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/issues)
-  [![Contributors](https://img.shields.io/github/contributors/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/graphs/contributors)
-  [![License](https://img.shields.io/github/license/revoltchat/backend?style=flat-square&logoColor=white)](https://github.com/revoltchat/backend/blob/main/LICENSE)
+  [![Stars](https://img.shields.io/github/stars/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/stargazers)
+  [![Forks](https://img.shields.io/github/forks/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/network/members)
+  [![Pull Requests](https://img.shields.io/github/issues-pr/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/pulls)
+  [![Issues](https://img.shields.io/github/issues/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/issues)
+  [![Contributors](https://img.shields.io/github/contributors/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/graphs/contributors)
+  [![License](https://img.shields.io/github/license/stoatchat/stoatchat?style=flat-square&logoColor=white)](https://github.com/stoatchat/stoatchat/blob/main/LICENSE)
 </h1>
-The services and libraries that power the Revolt service.<br/>
+The services and libraries that power the Stoat service.<br/>
 <br/>
 
 | Crate              | Path                                               | Description                         |                                                                                                                                                                                                                                                                                                           |
@@ -37,22 +37,19 @@ The services and libraries that power the Revolt service.<br/>
 
 Rust 1.86.0 or higher.
 
-> [!CAUTION]
-> The events server has a significant performance regression between Rust 1.77.2 and 1.78.0 onwards, see [issue #341](https://github.com/revoltchat/backend/issues/341). This is currently solved by build time options but we are looking for a proper fix.
-
 ## Development Guide
 
-Before contributing, make yourself familiar with [our contribution guidelines](https://developers.revolt.chat/contrib.html) and the [technical documentation for this project](https://revoltchat.github.io/backend/).
+Before contributing, make yourself familiar with [our contribution guidelines](https://developers.stoat.chat/developing/contrib/) and the [technical documentation for this project](https://developers.stoat.chat/).
 
 Before getting started, you'll want to install:
 
-- Rust toolchain (rustup recommended)
+- mise
 - Docker
 - Git
 - mold (optional, faster compilation)
 
 > A **default.nix** is available for Nix users!
-> Just run `nix-shell` and continue.
+> Run `nix-shell` to activate mise.
 
 As a heads-up, the development environment uses the following ports:
 
@@ -73,10 +70,19 @@ As a heads-up, the development environment uses the following ports:
 Now you can clone and build the project:
 
 ```bash
-git clone https://github.com/revoltchat/backend revolt-backend
-cd revolt-backend
-cargo build
+git clone https://github.com/stoatchat/stoatchat stoat-backend
+cd stoat-backend
+mise install
+mise build
 ```
+
+> [!TIP]
+> You can override `BUILDER` in your `.env` file to run cargo with mold if you installed it:
+>
+> ```bash
+> # .env
+> BUILDER = "mold --run cargo"
+> ```
 
 A default configuration `Revolt.toml` is present in this project that is suited for development.
 
@@ -114,7 +120,7 @@ If you'd like to change anything, create a `Revolt.overrides.toml` file and spec
 >       - "14672:15672"
 > ```
 >
-> And corresponding Revolt configuration:
+> With the corresponding Revolt configuration:
 >
 > ```toml
 > #     Revolt.overrides.toml
@@ -126,52 +132,40 @@ If you'd like to change anything, create a `Revolt.overrides.toml` file and spec
 > [rabbit]
 > port = 14072
 > ```
+>
+> And mise configuration
+>
+> ```bash
+> #.env
+> DATABASE_PORT = "14017"
+> RABBIT_PORT = "14072"
+> REDIS_PORT = "14079"
+> ```
 
 Then continue:
 
 ```bash
-# start other necessary services
-docker compose up -d
+cp livekit.example.yml livekit.yml
 
-# run everything together
-./scripts/start.sh
-# .. or individually
-# run the API server
-cargo run --bin revolt-delta
-# run the events server
-cargo run --bin revolt-bonfire
-# run the file server
-cargo run --bin revolt-autumn
-# run the proxy server
-cargo run --bin revolt-january
-# run the tenor proxy
-cargo run --bin revolt-gifbox
-# run the push daemon (not usually needed in regular development)
-cargo run --bin revolt-pushd
-
-# hint:
-# mold -run <cargo build, cargo run, etc...>
-# mold -run ./scripts/start.sh
+mise start
 ```
 
-You can start a web client by doing the following:
+You can start a web client by doing the following in another terminal:
 
 ```bash
 # if you do not have yarn yet and have a modern Node.js:
 corepack enable
 
 # clone the web client and run it:
-git clone --recursive https://github.com/revoltchat/revite
-cd revite
-yarn
-yarn build:deps
-echo "VITE_API_URL=http://local.revolt.chat:14702" > .env.local
-yarn dev --port 14701
+git clone --recursive https://github.com/stoatchat/for-web stoat-web
+cd stoat-web
+# refer to stoat-web/README.md for startup, creating an account and loging in
 ```
 
-Then go to http://local.revolt.chat:14701 to create an account/login.
-
 When signing up, go to http://localhost:14080 to find confirmation/password reset emails.
+
+To stop all services, hit (CTRL + c) in the terminal you ran `mise start` and run `mise docker:stop`
+
 
 ## Deployment Guide
 
@@ -201,14 +195,14 @@ Tag and push a new release by running:
 just release
 ```
 
-If you have bumped the crate versions, proceed to [GitHub releases](https://github.com/revoltchat/backend/releases/new) to create a changelog.
+If you have bumped the crate versions, proceed to [GitHub releases](https://github.com/stoatchat/stoatchat/releases/new) to create a changelog.
 
 ## Testing
 
 First, start the required services:
 
 ```sh
-docker compose -f docker-compose.db.yml up -d
+docker compose up -d
 ```
 
 Now run tests for whichever database:
@@ -220,6 +214,6 @@ TEST_DB=MONGODB cargo nextest run
 
 ## License
 
-The Revolt backend is generally licensed under the [GNU Affero General Public License v3.0](https://github.com/revoltchat/backend/blob/master/LICENSE).
+The Stoat backend is generally licensed under the [GNU Affero General Public License v3.0](https://github.com/stoatchat/stoatchat/blob/main/LICENSE).
 
 **Individual crates may supply their own licenses!**

@@ -10,6 +10,7 @@ use authifier::config::SMTPSettings;
 use authifier::config::Shield;
 use authifier::config::Template;
 use authifier::config::Templates;
+use authifier::config::EmailExpiryConfig;
 use authifier::Authifier;
 use rand::Rng;
 use revolt_config::config;
@@ -35,7 +36,7 @@ pub enum DatabaseInfo {
 }
 
 /// Database
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Database {
     /// Mock database
     Reference(ReferenceDb),
@@ -69,7 +70,7 @@ impl DatabaseInfo {
                     .await;
 
                     #[cfg(not(feature = "mongodb"))]
-                    return Err("MongoDB not enabled.".to_string())
+                    return Err("MongoDB not enabled.".to_string());
                 } else {
                     DatabaseInfo::Reference.connect().await
                 }
@@ -90,7 +91,7 @@ impl DatabaseInfo {
                         .await;
 
                         #[cfg(not(feature = "mongodb"))]
-                        return Err("MongoDB not enabled.".to_string())
+                        return Err("MongoDB not enabled.".to_string());
                     }
                     _ => unreachable!("must specify REFERENCE or MONGODB"),
                 }
@@ -137,29 +138,33 @@ impl Database {
                                 .api
                                 .smtp
                                 .reply_to
-                                .unwrap_or("support@revolt.chat".into()),
+                                .unwrap_or("support@stoat.chat".into()),
                         ),
                         port: config.api.smtp.port,
                         use_tls: config.api.smtp.use_tls,
                         use_starttls: config.api.smtp.use_starttls,
                     },
-                    expiry: Default::default(),
+                    expiry: EmailExpiryConfig {
+                        expire_verification: 3600 * 24 * 7,
+                        expire_password_reset: 3600 * 24,
+                        expire_account_deletion: 3600 * 24,
+                    },
                     templates: if config.production {
                         Templates {
                             verify: Template {
-                                title: "Verify your Revolt account.".into(),
+                                title: "Verify your Stoat account.".into(),
                                 text: include_str!("../../templates/verify.txt").into(),
                                 url: format!("{}/login/verify/", config.hosts.app),
                                 html: Some(include_str!("../../templates/verify.html").into()),
                             },
                             reset: Template {
-                                title: "Reset your Revolt password.".into(),
+                                title: "Reset your Stoat password.".into(),
                                 text: include_str!("../../templates/reset.txt").into(),
                                 url: format!("{}/login/reset/", config.hosts.app),
                                 html: Some(include_str!("../../templates/reset.html").into()),
                             },
                             reset_existing: Template {
-                                title: "You already have a Revolt account, reset your password."
+                                title: "You already have a Stoat account, reset your password."
                                     .into(),
                                 text: include_str!("../../templates/reset-existing.txt").into(),
                                 url: format!("{}/login/reset/", config.hosts.app),
