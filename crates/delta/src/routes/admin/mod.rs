@@ -3,7 +3,9 @@ use rocket::Route;
 
 mod accounts;
 mod cases;
+mod channels;
 mod comments;
+mod messages;
 mod meta;
 mod reports;
 mod roles;
