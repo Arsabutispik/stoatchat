@@ -190,6 +190,9 @@ pub enum ErrorType {
         feature: String,
     },
 
+    // ? Admin API relate errors
+    PrivilegedAccount,
+
     // :)
     ImATeaPot,
 }

@@ -43,9 +43,7 @@ impl<'r> Responder<'r, 'static> for Error {
             ErrorType::NotAMember => Status::BadRequest,
             ErrorType::AlreadyPinned => Status::BadRequest,
             ErrorType::NotPinned => Status::BadRequest,
-            ErrorType::InSlowmode {
-                retry_after: _,
-            } => Status::TooManyRequests,
+            ErrorType::InSlowmode { retry_after: _ } => Status::TooManyRequests,
             ErrorType::InvalidFlagValue => Status::BadRequest,
             ErrorType::InviteExists => Status::BadRequest,
 
@@ -104,6 +102,8 @@ impl<'r> Responder<'r, 'static> for Error {
             ErrorType::VosoUnavailable => Status::BadRequest,
 
             ErrorType::ImATeaPot => Status::ImATeapot,
+
+            ErrorType::PrivilegedAccount => Status::Forbidden,
         };
 
         // Serialize the error data structure into JSON.

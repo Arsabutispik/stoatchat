@@ -37,9 +37,7 @@ impl IntoResponse for Error {
             ErrorType::NotAMember => StatusCode::BAD_REQUEST,
             ErrorType::AlreadyPinned => StatusCode::BAD_REQUEST,
             ErrorType::NotPinned => StatusCode::BAD_REQUEST,
-            ErrorType::InSlowmode {
-                retry_after: _,
-            } => StatusCode::TOO_MANY_REQUESTS,
+            ErrorType::InSlowmode { retry_after: _ } => StatusCode::TOO_MANY_REQUESTS,
             ErrorType::InviteExists => StatusCode::BAD_REQUEST,
 
             ErrorType::CantCreateServers => StatusCode::FORBIDDEN,
@@ -98,6 +96,8 @@ impl IntoResponse for Error {
             ErrorType::NoEmbedData => StatusCode::BAD_REQUEST,
 
             ErrorType::ImATeaPot => StatusCode::IM_A_TEAPOT,
+
+            ErrorType::PrivilegedAccount => StatusCode::FORBIDDEN,
         };
 
         (status, Json(&self)).into_response()

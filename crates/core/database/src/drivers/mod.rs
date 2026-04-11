@@ -3,6 +3,7 @@ mod mongodb;
 mod reference;
 
 use authifier::config::Captcha;
+use authifier::config::EmailExpiryConfig;
 use authifier::config::EmailVerificationConfig;
 use authifier::config::PasswordScanning;
 use authifier::config::ResolveIp;
@@ -10,10 +11,10 @@ use authifier::config::SMTPSettings;
 use authifier::config::Shield;
 use authifier::config::Template;
 use authifier::config::Templates;
-use authifier::config::EmailExpiryConfig;
 use authifier::Authifier;
 use rand::Rng;
 use revolt_config::config;
+use revolt_result::Result;
 
 #[cfg(feature = "mongodb")]
 pub use self::mongodb::*;
@@ -250,5 +251,23 @@ impl Database {
             #[cfg(not(feature = "tasks"))]
             event_channel: None,
         }
+    }
+    pub async fn disable_authifier_account(&self, user_id: &str) -> Result<()> {
+        let auth = self.clone().to_authifier().await;
+
+        let mut account = auth
+            .database
+            .find_account(user_id)
+            .await
+            .map_err(|_| create_database_error!("find_account", "accounts"))?;
+
+        account.disabled = true;
+
+        auth.database
+            .save_account(&account)
+            .await
+            .map_err(|_| create_database_error!("save_account", "accounts"))?;
+
+        Ok(())
     }
 }
