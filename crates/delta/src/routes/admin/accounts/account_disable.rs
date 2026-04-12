@@ -10,11 +10,12 @@ use rocket::State;
 
 /// Disable an account. Requires AccountDisable permissions
 #[openapi(tag = "Admin")]
-#[post("/accounts/disable/<id>")]
+#[post("/accounts/disable/<id>?<case>")]
 pub async fn admin_account_disable(
     db: &State<Database>,
     auth: AdminAuthorization,
     id: Reference<'_>,
+    case: Option<&str>,
 ) -> Result<()> {
     let user = flatten_authorized_user(&auth);
     if !user_has_permission(user, v0::AdminUserPermissionFlags::AccountDisable) {
@@ -41,7 +42,7 @@ pub async fn admin_account_disable(
         db,
         &user.id,
         v0::AdminAuditItemActions::AccountDisable,
-        None,
+        case,
         Some(id.id),
         None,
     )
