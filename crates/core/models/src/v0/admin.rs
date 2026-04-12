@@ -289,7 +289,7 @@ auto_derived! {
         ManageNotes = 15,
         Discover = 16,
 
-        AccountDisable = 17,
+        ManageAccounts = 17,
     }
 
     pub enum AdminAuditItemActions {
@@ -322,7 +322,7 @@ auto_derived! {
         ServerUnbanMember,
 
         // Accounts
-        AccountDisable
+        ManageAccounts
     }
 
     // Joiner payloads
@@ -370,7 +370,7 @@ impl AdminAuditItemActions {
             AdminAuditItemActions::ServerBanMember => true,
             AdminAuditItemActions::ServerUnbanMember => true,
             AdminAuditItemActions::ServerFetchMembers => false,
-            AdminAuditItemActions::AccountDisable => true,
+            AdminAuditItemActions::ManageAccounts => true,
         }
     }
 }

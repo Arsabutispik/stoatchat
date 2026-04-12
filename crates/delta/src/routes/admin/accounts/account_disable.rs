@@ -9,7 +9,7 @@ use rocket::serde::json::Json;
 use rocket::State;
 use rocket_empty::EmptyResponse;
 
-/// Disable an account. Requires AccountDisable permissions
+/// Disable an account. Requires ManageAccounts permissions
 #[openapi(tag = "Admin")]
 #[post("/accounts/disable/<id>?<case>")]
 pub async fn admin_account_disable(
@@ -19,9 +19,9 @@ pub async fn admin_account_disable(
     case: Option<&str>,
 ) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);
-    if !user_has_permission(user, v0::AdminUserPermissionFlags::AccountDisable) {
+    if !user_has_permission(user, v0::AdminUserPermissionFlags::ManageAccounts) {
         return Err(create_error!(MissingPermission {
-            permission: "AccountDisable".to_string()
+            permission: "ManageAccounts".to_string()
         }));
     }
 
@@ -34,7 +34,7 @@ pub async fn admin_account_disable(
     let admin = db.admin_user_fetch(&target.id).await.ok();
 
     if let Some(admin) = admin {
-        if user_has_permission(&admin, v0::AdminUserPermissionFlags::AccountDisable) {
+        if user_has_permission(&admin, v0::AdminUserPermissionFlags::ManageAccounts) {
             return Err(create_error!(PrivilegedAccount));
         }
     }
@@ -42,7 +42,7 @@ pub async fn admin_account_disable(
     create_audit_action(
         db,
         &user.id,
-        v0::AdminAuditItemActions::AccountDisable,
+        v0::AdminAuditItemActions::ManageAccounts,
         case,
         Some(id.id),
         None,
