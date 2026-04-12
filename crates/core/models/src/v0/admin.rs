@@ -322,7 +322,8 @@ auto_derived! {
         ServerUnbanMember,
 
         // Accounts
-        ManageAccounts
+        DeleteAccount,
+        DisableAccount,
     }
 
     // Joiner payloads
@@ -370,7 +371,8 @@ impl AdminAuditItemActions {
             AdminAuditItemActions::ServerBanMember => true,
             AdminAuditItemActions::ServerUnbanMember => true,
             AdminAuditItemActions::ServerFetchMembers => false,
-            AdminAuditItemActions::ManageAccounts => true,
+            AdminAuditItemActions::DeleteAccount => true,
+            AdminAuditItemActions::DisableAccount => true,
         }
     }
 }

@@ -42,7 +42,7 @@ pub async fn admin_account_disable(
     create_audit_action(
         db,
         &user.id,
-        v0::AdminAuditItemActions::ManageAccounts,
+        v0::AdminAuditItemActions::DisableAccount,
         case,
         Some(id.id),
         None,
