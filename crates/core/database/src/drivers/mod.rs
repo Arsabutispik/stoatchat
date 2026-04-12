@@ -268,4 +268,20 @@ impl Database {
 
         Ok(())
     }
+    pub async fn delete_authifier_account(&self, user_id: &str) -> Result<()> {
+        let auth = self.clone().to_authifier().await;
+
+        let mut account = auth
+            .database
+            .find_account(user_id)
+            .await
+            .map_err(|_| create_database_error!("find_account", "accounts"))?;
+
+        account
+            .schedule_deletion(&auth)
+            .await
+            .map_err(|_| create_database_error!("schedule_deletion", "accounts"))?;
+
+        Ok(())
+    }
 }
