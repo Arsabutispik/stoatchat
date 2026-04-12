@@ -261,12 +261,10 @@ impl Database {
             .await
             .map_err(|_| create_database_error!("find_account", "accounts"))?;
 
-        account.disabled = true;
-
-        auth.database
-            .save_account(&account)
+        account
+            .disable(&auth)
             .await
-            .map_err(|_| create_database_error!("save_account", "accounts"))?;
+            .map_err(|_| create_database_error!("disable_account", "accounts"))?;
 
         Ok(())
     }
