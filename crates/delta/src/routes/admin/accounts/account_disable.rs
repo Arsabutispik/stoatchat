@@ -7,6 +7,7 @@ use revolt_models::v0::{self};
 use revolt_result::{create_error, Result};
 use rocket::serde::json::Json;
 use rocket::State;
+use rocket_empty::EmptyResponse;
 
 /// Disable an account. Requires AccountDisable permissions
 #[openapi(tag = "Admin")]
@@ -16,7 +17,7 @@ pub async fn admin_account_disable(
     auth: AdminAuthorization,
     id: Reference<'_>,
     case: Option<&str>,
-) -> Result<()> {
+) -> Result<EmptyResponse> {
     let user = flatten_authorized_user(&auth);
     if !user_has_permission(user, v0::AdminUserPermissionFlags::AccountDisable) {
         return Err(create_error!(MissingPermission {
@@ -50,5 +51,5 @@ pub async fn admin_account_disable(
 
     db.disable_authifier_account(&target.id).await?;
 
-    Ok(())
+    Ok(EmptyResponse)
 }
