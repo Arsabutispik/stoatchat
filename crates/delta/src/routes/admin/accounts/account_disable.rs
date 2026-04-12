@@ -39,6 +39,8 @@ pub async fn admin_account_disable(
         }
     }
 
+    db.disable_authifier_account(&target.id).await?;
+
     create_audit_action(
         db,
         &user.id,
@@ -48,8 +50,6 @@ pub async fn admin_account_disable(
         None,
     )
     .await?;
-
-    db.disable_authifier_account(&target.id).await?;
 
     Ok(EmptyResponse)
 }
