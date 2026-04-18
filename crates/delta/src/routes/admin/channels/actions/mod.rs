@@ -1,3 +1,3 @@
-mod channel_delete;
-mod channel_edit;
-mod channel_wipe;
+pub mod channel_delete;
+pub mod channel_edit;
+pub mod channel_wipe;

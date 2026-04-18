@@ -40,5 +40,6 @@ pub fn routes() -> (Vec<Route>, OpenApi) {
         servers::actions::server_remove_members::admin_server_remove_members,
         accounts::account_delete::admin_account_delete,
         accounts::account_disable::admin_account_disable,
+        channels::actions::channel_delete::admin_delete_channel,
     ]
 }

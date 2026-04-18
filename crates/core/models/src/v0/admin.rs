@@ -290,6 +290,7 @@ auto_derived! {
         Discover = 16,
 
         ManageAccounts = 17,
+        ManageChannels = 18,
     }
 
     pub enum AdminAuditItemActions {
@@ -324,6 +325,9 @@ auto_derived! {
         // Accounts
         DeleteAccount,
         DisableAccount,
+
+        // Channels
+        DeleteChannel,
     }
 
     // Joiner payloads
@@ -373,6 +377,7 @@ impl AdminAuditItemActions {
             AdminAuditItemActions::ServerFetchMembers => false,
             AdminAuditItemActions::DeleteAccount => true,
             AdminAuditItemActions::DisableAccount => true,
+            AdminAuditItemActions::DeleteChannel => true,
         }
     }
 }
